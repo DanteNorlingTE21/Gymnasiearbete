@@ -1,0 +1,4 @@
+Ai:n får brädet som 9 tal. 
+-1 = motståndare
+0 = tom
+1 = egen pjäs
