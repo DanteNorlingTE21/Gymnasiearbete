@@ -1,3 +1,6 @@
+from math import pow
+
+
 def make_move(board: list, move: tuple, player_id: int):
     """move(x,y)"""
     if player_id != 1 and player_id != 2:
@@ -23,48 +26,62 @@ def make_move(board: list, move: tuple, player_id: int):
 
 
 def new_board():
-    return [
-        ["_", "_", "_"],
-        ["_", "_", "_"],
-        ["_", "_", "_"],
-    ]
+    return [[0 for i in range(3)] for j in range(3)]
 
 
-def board_to_ints(board, player_id):
-    output = []
+def board_to_int(board):
+    """_ = 0, x = 1, o = 2"""
 
-    for y in board:
-        for x in y:
-            if x == "_":
-                output.append(0)
-            elif x == "x":
-                if player_id == 1:
-                    output.append(1)
-                else:
-                    output.append(-1)
-            elif x == "o":
-                if player_id == 1:
-                    output.append(-1)
-                else:
-                    output.append(1)
-    return output
+    sum = 0
+
+    e = 0
+    for row in board:
+        for tile in row:
+            if tile == 0:
+                sum += 0
+            elif tile == 1:
+                sum += 1 * pow(3, e)
+            elif tile == 2:
+                sum += 2 * pow(3, e)
+            e += 1
+
+    return int(sum)
+
+
+def int_to_board(x: int):
+
+    if x >= pow(3, 9):
+        return False
+
+    board = [["_" for h in range(3)] for p in range(3)]
+    # board[row][col]
+
+    for e in range(8, -1, -1):
+        d = x // (int(pow(3, e)))
+        # print("D", e, d)
+        if e > 5:
+            board[2][e - 6] = d
+        elif e > 2:
+            board[1][e - 3] = d
+        else:
+            board[0][e] = d
+        x -= d * int(pow(3, e))
+        # print("x", x)
+
+    return board
+
+def check_for_win(board):
+    #todo
 
 
 def print_board(board):
+    symbols = ["_", "x", "o"]
     for y in board:
         for x in y:
-            print(x, end="")
+            print(symbols[x], end="")
         print("")
 
 
 board = new_board()
 # [y][x]
-
-make_move(board, (2, 2), 1)
-make_move(board, (1, 1), 1)
-make_move(board, (0, 0), 1)
-make_move(board, (2, 0), 2)
-make_move(board, (0, 2), 2)
-print_board(board)
-print(board_to_ints(board, 1))
-print(board_to_ints(board, 2))
+print_board(int_to_board(19682))
