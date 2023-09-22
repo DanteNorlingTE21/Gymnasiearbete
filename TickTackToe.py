@@ -17,11 +17,11 @@ def make_move(board: list, move: tuple, player_id: int):
         print("INVALID MOVE:OUT OF RANGE")
         return False
 
-    if board[y][x] != "_":
+    if board[y][x] != 0:
         print("INVALID MOVE:OCUPIED SPACE")
         return False
 
-    board[y][x] = "x" if player_id == 1 else "o"
+    board[y][x] = player_id
     return True
 
 
@@ -70,8 +70,10 @@ def int_to_board(x: int):
 
     return board
 
+
 def check_for_win(board):
-    #todo
+    # todo
+    pass
 
 
 def print_board(board):
