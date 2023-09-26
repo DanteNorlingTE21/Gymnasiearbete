@@ -72,8 +72,38 @@ def int_to_board(x: int):
 
 
 def check_for_win(board):
-    # todo
-    pass
+
+    # row
+    if board[0][0] == board[0][1] and board[0][0] == board[0][2] and board[0][0] != 0:
+        return True
+    if board[1][0] == board[1][1] and board[1][0] == board[1][2] and board[1][0] != 0:
+        return True
+    if board[2][0] == board[2][1] and board[2][0] == board[2][2] and board[2][0] != 0:
+        return True
+    # column
+    if board[0][0] == board[1][0] and board[0][0] == board[2][0] and board[0][0] != 0:
+        return True
+    if board[0][1] == board[1][1] and board[0][1] == board[2][1] and board[0][1] != 0:
+        return True
+    if board[0][2] == board[1][2] and board[0][2] == board[2][2] and board[0][2] != 0:
+        return True
+
+    # diagonal
+    if board[0][0] == board[1][1] and board[0][0] == board[2][2] and board[0][0] != 0:
+        return True
+    if board[0][2] == board[1][1] and board[0][2] == board[0][2] and board[0][2] != 0:
+        return True
+
+    tie = True
+
+    for row in board:
+        for tile in row:
+            if tile == 0:
+                tie = False
+    if tie:
+        return "TIE"
+
+    return False
 
 
 def print_board(board):
@@ -86,4 +116,6 @@ def print_board(board):
 
 board = new_board()
 # [y][x]
-print_board(int_to_board(19682))
+test = 10898
+print_board(int_to_board(test))
+print(check_for_win(int_to_board(test)))
