@@ -13,8 +13,8 @@ class TreeBranch:
         self, board: int, parent: "TreeBranch", currentPlayerMarker, depth: int = 0
     ) -> None:
         global kids
-        kids += 1
-        print(kids)
+        # kids += 1
+        # print(kids)
         self.children = []
         self.marker = currentPlayerMarker
         self.state = board
@@ -32,7 +32,7 @@ class TreeBranch:
         possibleMoves = []
         for y in range(3):
             for x in range(3):
-                currentBoard = int_to_board(self.state)
+                currentBoard = int_to_board(self.state).copy()
                 if currentBoard[y][x] == 0:
                     currentBoard[y][x] = self.marker
                     possibleMoves.append(board_to_int(currentBoard))
@@ -68,6 +68,8 @@ class SetAlgorithm:
                 if boardArray[y][x] == 0:
                     boardArray[y][x] = self.marker
                     possibleMoves.append(board_to_int(boardArray))
+
+        print(possibleMoves)
         for move in possibleMoves:
             print("TREE TIME")
             trees.append(TreeBranch(move, self, self.marker, 0))
