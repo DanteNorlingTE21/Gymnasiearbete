@@ -1,6 +1,92 @@
 from math import pow
 
 
+class TrainedAI:
+    pass
+
+
+kids = 0
+
+
+class TreeBranch:
+    def __init__(
+        self, board: int, parent: "TreeBranch", currentPlayerMarker, depth: int = 0
+    ) -> None:
+        global kids
+        kids += 1
+        print(kids)
+        self.children = []
+        self.marker = currentPlayerMarker
+        self.state = board
+        self.parent = parent
+        self.depth = depth
+        self.value = {}
+        self.getValue()
+
+    def getValue(self):
+        if check_for_win(self.state) == True:
+            self.updateTree(1, self.marker)
+        elif check_for_win(self.state) == "TIE":
+            self.updateTree(0, self.marker)
+
+        possibleMoves = []
+        for y in range(3):
+            for x in range(3):
+                currentBoard = int_to_board(self.state)
+                if currentBoard[y][x] == 0:
+                    currentBoard[y][x] = self.marker
+                    possibleMoves.append(board_to_int(currentBoard))
+
+        for move in possibleMoves:
+            self.children.append(
+                TreeBranch(move, self, 1 if self.marker == 2 else 2, self.depth + 1)
+            )
+        for child in self.children:
+            child.getValue()
+
+    def updateTree(self, deltaValue, marker):
+        if marker in self.value.keys():
+            self.value[marker] += deltaValue
+        else:
+            self.value[marker] = deltaValue
+        if self.depth != 0:
+            self.parent.updateTree(deltaValue, marker)
+
+
+class SetAlgorithm:
+    def __init__(self, marker) -> None:
+        if not (marker == 1 or marker == 2):
+            raise Exception("INVALID MARKER")
+        self.marker = marker
+
+    def bestMove(self, board: int):
+        trees = []
+        possibleMoves = []
+        for y in range(3):
+            for x in range(3):
+                boardArray = int_to_board(board)
+                if boardArray[y][x] == 0:
+                    boardArray[y][x] = self.marker
+                    possibleMoves.append(board_to_int(boardArray))
+        for move in possibleMoves:
+            print("TREE TIME")
+            trees.append(TreeBranch(move, self, self.marker, 0))
+
+        print("DELTA TIME")
+        opponentMarker = 1 if self.marker == 2 else 2
+        bestTree = trees[0]
+        bestDelta = trees[0].values[self.marker] - trees[0].values[opponentMarker]
+        for tree in trees:
+            if (tree.values[self.marker] - tree.values[opponentMarker]) > bestDelta:
+                bestTree = tree
+                bestDelta = tree.values[self.marker] - tree.values[opponentMarker]
+        return bestTree.state
+
+
+class Human:
+    pass
+
+
 def make_move(board: list, move: tuple, player_id: int):
     """move(x,y)"""
     if player_id != 1 and player_id != 2:
@@ -72,6 +158,8 @@ def int_to_board(x: int):
 
 
 def check_for_win(board):
+    if isinstance(board, int):
+        board = int_to_board(board)
 
     # row
     if board[0][0] == board[0][1] and board[0][0] == board[0][2] and board[0][0] != 0:
@@ -115,7 +203,12 @@ def print_board(board):
 
 
 board = new_board()
-# [y][x]
-test = 10898
-print_board(int_to_board(test))
-print(check_for_win(int_to_board(test)))
+while True:
+    player2 = SetAlgorithm(2)
+    print_board(board)
+    player_move = input("Move:").split(",")
+    player_move[0], player_move[1] = int(player_move[0]), int(player_move[1])
+    make_move(board, (player_move[0], player_move[1]), 1)
+    print_board(board)
+    board = int_to_board(player2.bestMove(board_to_int(board)))
+    print_board(board)
