@@ -12,7 +12,7 @@ class TreeBranch:
     def __init__(
         self, board: int, parent: "TreeBranch", currentPlayerMarker, depth: int = 0
     ) -> None:
-        global kids
+        # global kids
         # kids += 1
         # print(kids)
         self.children = []
@@ -26,8 +26,10 @@ class TreeBranch:
     def getValue(self):
         if check_for_win(self.state) == True:
             self.updateTree(1, self.marker)
+            return
         elif check_for_win(self.state) == "TIE":
             self.updateTree(0, self.marker)
+            return
 
         possibleMoves = []
         for y in range(3):
@@ -50,6 +52,8 @@ class TreeBranch:
         else:
             self.value[marker] = deltaValue
         if self.depth != 0:
+            print(self.value[marker])
+            print(self.parent)
             self.parent.updateTree(deltaValue, marker)
 
 
@@ -72,7 +76,7 @@ class SetAlgorithm:
         print(possibleMoves)
         for move in possibleMoves:
             print("TREE TIME")
-            trees.append(TreeBranch(move, self, self.marker, 0))
+            trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, 0))
 
         print("DELTA TIME")
         opponentMarker = 1 if self.marker == 2 else 2
