@@ -20,16 +20,17 @@ class TreeBranch:
         self.state = board
         self.parent = parent
         self.depth = depth
-        self.value = {}
+        self.value = {1: 0, 2: 0}
         self.getValue()
 
     def getValue(self):
+        """
         if check_for_win(self.state) == True:
             self.updateTree(1, self.marker)
             return
         elif check_for_win(self.state) == "TIE":
             self.updateTree(0, self.marker)
-            return
+            return"""
 
         possibleMoves = []
         for y in range(3):
@@ -40,20 +41,25 @@ class TreeBranch:
                     possibleMoves.append(board_to_int(currentBoard))
 
         for move in possibleMoves:
-            self.children.append(
-                TreeBranch(move, self, 1 if self.marker == 2 else 2, self.depth + 1)
-            )
-        for child in self.children:
-            child.getValue()
+            n = check_for_win(move)
+            if n[0] == True:
+                self.updateTree(1, self.marker)
+            elif n[0] == "TIE":
+                self.updateTree(0, self.marker)
+            else:
+                self.children.append(
+                    TreeBranch(move, self, 1 if self.marker == 2 else 2, self.depth + 1)
+                )
 
     def updateTree(self, deltaValue, marker):
         if marker in self.value.keys():
             self.value[marker] += deltaValue
+            self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
         else:
             self.value[marker] = deltaValue
         if self.depth != 0:
-            print(self.value[marker])
-            print(self.parent)
+            # print(self.value[marker])
+            # print(self.parent)
             self.parent.updateTree(deltaValue, marker)
 
 
@@ -75,17 +81,41 @@ class SetAlgorithm:
 
         print(possibleMoves)
         for move in possibleMoves:
-            print("TREE TIME")
+            # print("TREE TIME")
             trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, 0))
 
-        print("DELTA TIME")
+        # print("DELTA TIME")
         opponentMarker = 1 if self.marker == 2 else 2
+        # bestTree = trees[0]
+        # bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
+        winPercent = trees[0].value[self.marker] / (
+            trees[0].value[self.marker] + trees[0].value[opponentMarker]
+        )
         bestTree = trees[0]
-        bestDelta = trees[0].values[self.marker] - trees[0].values[opponentMarker]
+        # print("WIN PERCENT", winPercent)
         for tree in trees:
-            if (tree.values[self.marker] - tree.values[opponentMarker]) > bestDelta:
+            # print(tree.value, print_board(int_to_board(tree.state)))
+            # print(self.marker, opponentMarker)
+            """print(
+                tree.value[self.marker]
+                / (tree.value[self.marker] + tree.value[opponentMarker]),
+                print_board(int_to_board(tree.state)),
+            )"""
+            """
+            if (tree.value[self.marker] - tree.value[opponentMarker]) > bestDelta:
                 bestTree = tree
-                bestDelta = tree.values[self.marker] - tree.values[opponentMarker]
+                bestDelta = tree.value[self.marker] - tree.value[opponentMarker]"""
+            if (
+                tree.value[self.marker]
+                / (tree.value[self.marker] + tree.value[opponentMarker])
+                > winPercent
+            ):
+                bestTree = tree
+                winPercent = tree.value[self.marker] / (
+                    tree.value[self.marker] + tree.value[opponentMarker]
+                )
+        print("WIN PERCENT", winPercent)
+
         return bestTree.state
 
 
@@ -169,24 +199,24 @@ def check_for_win(board):
 
     # row
     if board[0][0] == board[0][1] and board[0][0] == board[0][2] and board[0][0] != 0:
-        return True
+        return True, board[0][0]
     if board[1][0] == board[1][1] and board[1][0] == board[1][2] and board[1][0] != 0:
-        return True
+        return True, board[1][0]
     if board[2][0] == board[2][1] and board[2][0] == board[2][2] and board[2][0] != 0:
-        return True
+        return True, board[2][0]
     # column
     if board[0][0] == board[1][0] and board[0][0] == board[2][0] and board[0][0] != 0:
-        return True
+        return True, board[0][0]
     if board[0][1] == board[1][1] and board[0][1] == board[2][1] and board[0][1] != 0:
-        return True
+        return True, board[0][1]
     if board[0][2] == board[1][2] and board[0][2] == board[2][2] and board[0][2] != 0:
-        return True
+        return True, board[0][2]
 
     # diagonal
     if board[0][0] == board[1][1] and board[0][0] == board[2][2] and board[0][0] != 0:
-        return True
+        return True, board[0][0]
     if board[0][2] == board[1][1] and board[0][2] == board[0][2] and board[0][2] != 0:
-        return True
+        return True, board[0][2]
 
     tie = True
 
@@ -195,9 +225,9 @@ def check_for_win(board):
             if tile == 0:
                 tie = False
     if tie:
-        return "TIE"
+        return "TIE", 0
 
-    return False
+    return False, 0
 
 
 def print_board(board):
@@ -209,9 +239,10 @@ def print_board(board):
 
 
 board = new_board()
+print_board(board)
+
 while True:
     player2 = SetAlgorithm(2)
-    print_board(board)
     player_move = input("Move:").split(",")
     player_move[0], player_move[1] = int(player_move[0]), int(player_move[1])
     make_move(board, (player_move[0], player_move[1]), 1)
