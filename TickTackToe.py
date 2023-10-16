@@ -1,4 +1,4 @@
-from math import pow
+from math import pow, factorial
 
 
 class TrainedAI:
@@ -10,7 +10,12 @@ kids = 0
 
 class TreeBranch:
     def __init__(
-        self, board: int, parent: "TreeBranch", currentPlayerMarker, depth: int = 0
+        self,
+        board: int,
+        parent: "TreeBranch",
+        currentPlayerMarker,
+        start,
+        depth: int = 0,
     ) -> None:
         # global kids
         # kids += 1
@@ -19,6 +24,7 @@ class TreeBranch:
         self.marker = currentPlayerMarker
         self.state = board
         self.parent = parent
+        self.startDepth = start
         self.depth = depth
         self.value = {1: 0, 2: 0}
         self.getValue()
@@ -43,18 +49,26 @@ class TreeBranch:
         for move in possibleMoves:
             n = check_for_win(move)
             if n[0] == True:
-                self.updateTree(2, self.marker)
+                self.updateTree(1, self.marker)
             elif n[0] == "TIE":
                 self.updateTree(-1, self.marker)
                 self.updateTree(1, 1 if self.marker == 2 else 2)
             else:
                 self.children.append(
-                    TreeBranch(move, self, 1 if self.marker == 2 else 2, self.depth + 1)
+                    TreeBranch(
+                        move,
+                        self,
+                        1 if self.marker == 2 else 2,
+                        self.startDepth,
+                        self.depth + 1,
+                    )
                 )
 
     def updateTree(self, deltaValue, marker):
         if marker in self.value.keys():
-            self.value[marker] += deltaValue
+            self.value[marker] += deltaValue * factorial(
+                9 - (self.startDepth + self.depth)
+            )
             # self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
         else:
             self.value[marker] = deltaValue
@@ -70,7 +84,7 @@ class SetAlgorithm:
             raise Exception("INVALID MARKER")
         self.marker = marker
 
-    def bestMove(self, board: int):
+    def bestMove(self, board: int, turn: int = 0):
         trees = []
         possibleMoves = []
         for y in range(3):
@@ -83,7 +97,7 @@ class SetAlgorithm:
         print(possibleMoves)
         for move in possibleMoves:
             # print("TREE TIME")
-            trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, 0))
+            trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0))
 
         # print("DELTA TIME")
         opponentMarker = 1 if self.marker == 2 else 2
@@ -244,12 +258,14 @@ def print_board(board):
 
 board = new_board()
 print_board(board)
-
+turn = 0
 while True:
     player2 = SetAlgorithm(2)
     player_move = input("Move:").split(",")
     player_move[0], player_move[1] = int(player_move[0]), int(player_move[1])
     make_move(board, (player_move[0], player_move[1]), 1)
+    turn += 1
     print_board(board)
-    board = int_to_board(player2.bestMove(board_to_int(board)))
+    board = int_to_board(player2.bestMove(board_to_int(board), turn))
+    turn += 1
     print_board(board)
