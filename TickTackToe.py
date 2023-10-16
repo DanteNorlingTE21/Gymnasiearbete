@@ -51,8 +51,8 @@ class TreeBranch:
             if n[0] == True:
                 self.updateTree(1, self.marker)
             elif n[0] == "TIE":
-                self.updateTree(-1, self.marker)
-                self.updateTree(1, 1 if self.marker == 2 else 2)
+                self.updateTree(0, self.marker)
+                # self.updateTree(1, 1 if self.marker == 2 else 2)
             else:
                 self.children.append(
                     TreeBranch(
@@ -104,7 +104,7 @@ class SetAlgorithm:
         # bestTree = trees[0]
         # bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
         winPercent = trees[0].value[self.marker] / (
-            trees[0].value[self.marker] + trees[0].value[opponentMarker]
+            abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
         )
         bestTree = trees[0]
         # print("WIN PERCENT", winPercent)
@@ -114,7 +114,10 @@ class SetAlgorithm:
             )
             print(
                 tree.value[self.marker]
-                / (tree.value[self.marker] + tree.value[opponentMarker]),
+                / (
+                    abs(trees[0].value[self.marker])
+                    + abs(trees[0].value[opponentMarker])
+                ),
             )
             print_board(int_to_board(tree.state))
             # print(self.marker, opponentMarker)
@@ -125,12 +128,16 @@ class SetAlgorithm:
                 bestDelta = tree.value[self.marker] - tree.value[opponentMarker]"""
             if (
                 tree.value[self.marker]
-                / (tree.value[self.marker] + tree.value[opponentMarker])
+                / (
+                    abs(trees[0].value[self.marker])
+                    + abs(trees[0].value[opponentMarker])
+                )
                 > winPercent
             ):
                 bestTree = tree
                 winPercent = tree.value[self.marker] / (
-                    tree.value[self.marker] + tree.value[opponentMarker]
+                    abs(trees[0].value[self.marker])
+                    + abs(trees[0].value[opponentMarker])
                 )
         # print("WIN PERCENT", winPercent)
 
