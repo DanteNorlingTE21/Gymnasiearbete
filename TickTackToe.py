@@ -43,9 +43,10 @@ class TreeBranch:
         for move in possibleMoves:
             n = check_for_win(move)
             if n[0] == True:
-                self.updateTree(1, self.marker)
+                self.updateTree(2, self.marker)
             elif n[0] == "TIE":
-                self.updateTree(0, self.marker)
+                self.updateTree(-1, self.marker)
+                self.updateTree(1, 1 if self.marker == 2 else 2)
             else:
                 self.children.append(
                     TreeBranch(move, self, 1 if self.marker == 2 else 2, self.depth + 1)
@@ -54,7 +55,7 @@ class TreeBranch:
     def updateTree(self, deltaValue, marker):
         if marker in self.value.keys():
             self.value[marker] += deltaValue
-            self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
+            # self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
         else:
             self.value[marker] = deltaValue
         if self.depth != 0:
@@ -94,13 +95,16 @@ class SetAlgorithm:
         bestTree = trees[0]
         # print("WIN PERCENT", winPercent)
         for tree in trees:
-            # print(tree.value, print_board(int_to_board(tree.state)))
-            # print(self.marker, opponentMarker)
-            """print(
+            print(
+                tree.value,
+            )
+            print(
                 tree.value[self.marker]
                 / (tree.value[self.marker] + tree.value[opponentMarker]),
-                print_board(int_to_board(tree.state)),
-            )"""
+            )
+            print_board(int_to_board(tree.state))
+            # print(self.marker, opponentMarker)
+
             """
             if (tree.value[self.marker] - tree.value[opponentMarker]) > bestDelta:
                 bestTree = tree
@@ -114,7 +118,7 @@ class SetAlgorithm:
                 winPercent = tree.value[self.marker] / (
                     tree.value[self.marker] + tree.value[opponentMarker]
                 )
-        print("WIN PERCENT", winPercent)
+        # print("WIN PERCENT", winPercent)
 
         return bestTree.state
 
