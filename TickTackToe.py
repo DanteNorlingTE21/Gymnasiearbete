@@ -66,16 +66,21 @@ class TreeBranch:
 
     def updateTree(self, deltaValue, marker):
         if marker in self.value.keys():
-            self.value[marker] += deltaValue * factorial(
-                9 - (self.startDepth + self.depth)
-            )
+            """
+            print(
+                "Tie dephth", self.depth
+            ) if deltaValue == 1 and self.depth + self.startDepth > 4 else None
+            """
+            self.value[marker] += deltaValue  # * factorial(
+            #    9 - (self.startDepth + self.depth)
+            # )
             # self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
         else:
             self.value[marker] = deltaValue
         if self.depth != 0:
             # print(self.value[marker])
             # print(self.parent)
-            self.parent.updateTree(deltaValue, marker)
+            self.parent.updateTree(deltaValue / 10, marker)
 
 
 class SetAlgorithm:
@@ -102,43 +107,47 @@ class SetAlgorithm:
         # print("DELTA TIME")
         opponentMarker = 1 if self.marker == 2 else 2
         # bestTree = trees[0]
-        # bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
-        winPercent = trees[0].value[self.marker] / (
-            abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
-        )
+        bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
+        # winPercent = trees[0].value[self.marker] / (
+        #    abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
+        # )
         bestTree = trees[0]
         # print("WIN PERCENT", winPercent)
         for tree in trees:
             print(
                 tree.value,
             )
+            """
             print(
                 tree.value[self.marker]
                 / (
                     abs(trees[0].value[self.marker])
                     + abs(trees[0].value[opponentMarker])
                 ),
-            )
+            )"""
+            print(tree.value[self.marker] - tree.value[opponentMarker])
             print_board(int_to_board(tree.state))
             # print(self.marker, opponentMarker)
 
             """
-            if (tree.value[self.marker] - tree.value[opponentMarker]) > bestDelta:
-                bestTree = tree
-                bestDelta = tree.value[self.marker] - tree.value[opponentMarker]"""
+
             if (
                 tree.value[self.marker]
                 / (
                     abs(trees[0].value[self.marker])
                     + abs(trees[0].value[opponentMarker])
                 )
-                > winPercent
-            ):
+                > winPercent            ):
                 bestTree = tree
                 winPercent = tree.value[self.marker] / (
                     abs(trees[0].value[self.marker])
                     + abs(trees[0].value[opponentMarker])
                 )
+                """
+            if (tree.value[self.marker] - tree.value[opponentMarker]) > bestDelta:
+                bestTree = tree
+                bestDelta = tree.value[self.marker] - tree.value[opponentMarker]
+
         # print("WIN PERCENT", winPercent)
 
         return bestTree.state
@@ -275,4 +284,5 @@ while True:
     print_board(board)
     board = int_to_board(player2.bestMove(board_to_int(board), turn))
     turn += 1
+    print()
     print_board(board)
