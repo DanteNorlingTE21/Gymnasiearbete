@@ -30,13 +30,12 @@ class TreeBranch:
         self.getValue()
 
     def getValue(self):
-        """
-        if check_for_win(self.state) == True:
+        if check_for_win(self.state)[0] == True:
             self.updateTree(1, self.marker)
             return
-        elif check_for_win(self.state) == "TIE":
+        elif check_for_win(self.state)[0] == "TIE":
             self.updateTree(0, self.marker)
-            return"""
+            return
 
         possibleMoves = []
         for y in range(3):
@@ -102,6 +101,8 @@ class SetAlgorithm:
         print(possibleMoves)
         for move in possibleMoves:
             # print("TREE TIME")
+            if check_for_win(move)[0] == True:
+                return move
             trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0))
 
         # print("DELTA TIME")
@@ -249,7 +250,7 @@ def check_for_win(board):
     # diagonal
     if board[0][0] == board[1][1] and board[0][0] == board[2][2] and board[0][0] != 0:
         return True, board[0][0]
-    if board[0][2] == board[1][1] and board[0][2] == board[0][2] and board[0][2] != 0:
+    if board[0][2] == board[1][1] and board[0][2] == board[2][0] and board[0][2] != 0:
         return True, board[0][2]
 
     tie = True
@@ -286,3 +287,6 @@ while True:
     turn += 1
     print()
     print_board(board)
+    if check_for_win(board)[0] != False:
+        print("Game Over")
+        break
