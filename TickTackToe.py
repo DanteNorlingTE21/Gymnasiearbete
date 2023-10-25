@@ -87,33 +87,39 @@ class SetAlgorithm:
         if not (marker == 1 or marker == 2):
             raise Exception("INVALID MARKER")
         self.marker = marker
+        self.currentTree = None
 
     def bestMove(self, board: int, turn: int = 0):
-        trees = []
-        possibleMoves = []
-        for y in range(3):
-            for x in range(3):
-                boardArray = int_to_board(board)
-                if boardArray[y][x] == 0:
-                    boardArray[y][x] = self.marker
-                    possibleMoves.append(board_to_int(boardArray))
+        if self.currentTree == None:
+            trees = []
+            possibleMoves = []
+            for y in range(3):
+                for x in range(3):
+                    boardArray = int_to_board(board)
+                    if boardArray[y][x] == 0:
+                        boardArray[y][x] = self.marker
+                        possibleMoves.append(board_to_int(boardArray))
 
-        print(possibleMoves)
-        for move in possibleMoves:
-            # print("TREE TIME")
-            if check_for_win(move)[0] == True:
-                return move
-            trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0))
+            print(possibleMoves)
+            for move in possibleMoves:
+                # print("TREE TIME")
+                if check_for_win(move)[0] == True:
+                    return move
+                trees.append(
+                    TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0)
+                )
 
-        # print("DELTA TIME")
-        opponentMarker = 1 if self.marker == 2 else 2
-        # bestTree = trees[0]
-        bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
-        # winPercent = trees[0].value[self.marker] / (
-        #    abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
-        # )
-        bestTree = trees[0]
-        # print("WIN PERCENT", winPercent)
+            # print("DELTA TIME")
+            opponentMarker = 1 if self.marker == 2 else 2
+            # bestTree = trees[0]
+            bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
+            # winPercent = trees[0].value[self.marker] / (
+            #    abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
+            # )
+            bestTree = trees[0]
+            # print("WIN PERCENT", winPercent)
+        else:
+            trees = self.currentTree.children
         for tree in trees:
             print(
                 tree.value,
@@ -150,7 +156,7 @@ class SetAlgorithm:
                 bestDelta = tree.value[self.marker] - tree.value[opponentMarker]
 
         # print("WIN PERCENT", winPercent)
-
+        self.currentTree = bestTree
         return bestTree.state
 
 
