@@ -1,4 +1,5 @@
 from math import pow, factorial
+import threading
 
 
 class TrainedAI:
@@ -27,6 +28,7 @@ class TreeBranch:
         self.startDepth = start
         self.depth = depth
         self.value = {1: 0, 2: 0}
+
         self.getValue()
 
     def getValue(self):
@@ -87,39 +89,33 @@ class SetAlgorithm:
         if not (marker == 1 or marker == 2):
             raise Exception("INVALID MARKER")
         self.marker = marker
-        self.currentTree = None
 
     def bestMove(self, board: int, turn: int = 0):
-        if self.currentTree == None:
-            trees = []
-            possibleMoves = []
-            for y in range(3):
-                for x in range(3):
-                    boardArray = int_to_board(board)
-                    if boardArray[y][x] == 0:
-                        boardArray[y][x] = self.marker
-                        possibleMoves.append(board_to_int(boardArray))
+        trees = []
+        possibleMoves = []
+        for y in range(3):
+            for x in range(3):
+                boardArray = int_to_board(board)
+                if boardArray[y][x] == 0:
+                    boardArray[y][x] = self.marker
+                    possibleMoves.append(board_to_int(boardArray))
 
-            print(possibleMoves)
-            for move in possibleMoves:
-                # print("TREE TIME")
-                if check_for_win(move)[0] == True:
-                    return move
-                trees.append(
-                    TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0)
-                )
+        print(possibleMoves)
+        for move in possibleMoves:
+            # print("TREE TIME")
+            if check_for_win(move)[0] == True:
+                return move
+            trees.append(TreeBranch(move, self, 1 if self.marker == 2 else 2, turn, 0))
 
-            # print("DELTA TIME")
-            opponentMarker = 1 if self.marker == 2 else 2
-            # bestTree = trees[0]
-            bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
-            # winPercent = trees[0].value[self.marker] / (
-            #    abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
-            # )
-            bestTree = trees[0]
-            # print("WIN PERCENT", winPercent)
-        else:
-            trees = self.currentTree.children
+        # print("DELTA TIME")
+        opponentMarker = 1 if self.marker == 2 else 2
+        # bestTree = trees[0]
+        bestDelta = trees[0].value[self.marker] - trees[0].value[opponentMarker]
+        # winPercent = trees[0].value[self.marker] / (
+        #    abs(trees[0].value[self.marker]) + abs(trees[0].value[opponentMarker])
+        # )
+        bestTree = trees[0]
+        # print("WIN PERCENT", winPercent)
         for tree in trees:
             print(
                 tree.value,
@@ -156,7 +152,6 @@ class SetAlgorithm:
                 bestDelta = tree.value[self.marker] - tree.value[opponentMarker]
 
         # print("WIN PERCENT", winPercent)
-        self.currentTree = bestTree
         return bestTree.state
 
 
@@ -282,11 +277,14 @@ def print_board(board):
 board = new_board()
 print_board(board)
 turn = 0
+player2 = SetAlgorithm(2)
+
 while True:
-    player2 = SetAlgorithm(2)
     player_move = input("Move:").split(",")
     player_move[0], player_move[1] = int(player_move[0]), int(player_move[1])
-    make_move(board, (player_move[0], player_move[1]), 1)
+    if not make_move(board, (player_move[0], player_move[1]), 1):
+        print("INVALID MOVE")
+        continue
     turn += 1
     print_board(board)
     board = int_to_board(player2.bestMove(board_to_int(board), turn))
