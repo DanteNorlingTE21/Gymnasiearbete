@@ -1,3 +1,3 @@
-test = {}
+import numpy as np
 
-test[1] += 200
+print(np.random.rand(3,9))

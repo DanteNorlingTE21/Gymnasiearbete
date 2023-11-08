@@ -55,6 +55,7 @@ class TreeBranch:
                 self.updateTree(0, self.marker)
                 # self.updateTree(1, 1 if self.marker == 2 else 2)
             else:
+
                 self.children.append(
                     TreeBranch(
                         move,
