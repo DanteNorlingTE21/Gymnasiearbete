@@ -1,12 +1,31 @@
 from math import pow, factorial
 import threading
+from datetime import datetime
 
+DEBUG = False
+
+class Human:
+    def __init__(self, marker) -> None:
+        self.marker = marker
+        self.type = "Human"
+    
+    def getMove(self):
+        while True:
+            player_move = ["", ""]
+            move_str = input("Move(Column,Row): ")
+
+            player_move[0], player_move[1] = move_str[0], move_str[-1]
+            try:
+                player_move[0], player_move[1] = decipher_player_move(player_move)
+            except TypeError:
+                continue
+            return player_move
 
 class TrainedAI:
     pass
 
 
-kids = 0
+
 
 
 class TreeBranch:
@@ -18,9 +37,7 @@ class TreeBranch:
         start,
         depth: int = 0,
     ) -> None:
-        # global kids
-        # kids += 1
-        # print(kids)
+
         self.children = []
         self.marker = currentPlayerMarker
         self.state = board
@@ -90,8 +107,9 @@ class SetAlgorithm:
         if not (marker == 1 or marker == 2):
             raise Exception("INVALID MARKER")
         self.marker = marker
+        self.type = "SetAlgorithm"
 
-    def bestMove(self, board: int, turn: int = 0):
+    def getMove(self, board: int, turn: int = 0):
         trees = []
         possibleMoves = []
         for y in range(3):
@@ -101,7 +119,7 @@ class SetAlgorithm:
                     boardArray[y][x] = self.marker
                     possibleMoves.append(board_to_int(boardArray))
 
-        print(possibleMoves)
+        print(possibleMoves) if DEBUG else None
         for move in possibleMoves:
             # print("TREE TIME")
             if check_for_win(move)[0] == True:
@@ -118,20 +136,21 @@ class SetAlgorithm:
         bestTree = trees[0]
         # print("WIN PERCENT", winPercent)
         for tree in trees:
-            print(
-                tree.value,
-            )
-            """
-            print(
-                tree.value[self.marker]
-                / (
-                    abs(trees[0].value[self.marker])
-                    + abs(trees[0].value[opponentMarker])
-                ),
-            )"""
-            print(tree.value[self.marker] - tree.value[opponentMarker])
-            print_board(int_to_board(tree.state))
-            # print(self.marker, opponentMarker)
+            if DEBUG:
+                print(
+                    tree.value,
+                )
+                """
+                print(
+                    tree.value[self.marker]
+                    / (
+                        abs(trees[0].value[self.marker])
+                        + abs(trees[0].value[opponentMarker])
+                    ),
+                )"""
+                print(tree.value[self.marker] - tree.value[opponentMarker])
+                print_board(int_to_board(tree.state))
+                # print(self.marker, opponentMarker)
 
             """
 
@@ -154,10 +173,6 @@ class SetAlgorithm:
 
         # print("WIN PERCENT", winPercent)
         return bestTree.state
-
-
-class Human:
-    pass
 
 
 def make_move(board: list, move: tuple, player_id: int):
@@ -269,29 +284,94 @@ def check_for_win(board):
 
 def print_board(board):
     symbols = ["_", "x", "o"]
+    print("  A  B  C")
+    i = 1
     for y in board:
+        print(i, end=" ")
+        i += 1
         for x in y:
-            print(symbols[x], end="")
+            print(symbols[x]," ", end="")
         print("")
 
+def decipher_player_move(move:tuple):
+    x = move[0] if not move[0].isdigit() else move[1]
+    y = move[1] if move[1].isdigit() else move[0]
 
-board = new_board()
-print_board(board)
-turn = 0
+    if x.isdigit() and y.isdigit():
+        print("INVALID MOVE:INVALID ROW AND COLUMN")
+        return False
+    elif not x.isdigit() and not y.isdigit():
+        print("INVALID MOVE:INVALID ROW AND COLUMN")
+        return False
+    
+    x = x.upper()
+    
+    if x == "A":
+        x = 0
+    elif x == "B":
+        x = 1
+    elif x == "C":
+        x = 2
+    else:
+        print("INVALID MOVE:INVALID COLUMN")
+        return False
+
+    if y == "1":
+        y = 0
+    elif y == "2":
+        y = 1
+    elif y == "3":
+        y = 2
+    else:
+        print("INVALID MOVE:INVALID ROW")
+        return False
+
+    return (x,y)
+
+def game(player1,player2,log:bool = False):
+    board = new_board()
+    print_board(board)
+    board_states = [0,]
+    turn = 0
+    while True:
+
+        if not make_move(board, (player1.getMove()), 1):
+            print("INVALID MOVE")
+            continue
+        turn += 1
+        print_board(board)
+        board_states.append(board_to_int(board))
+        if check_for_win(board)[0] != False:
+            print("Game Over")
+            break
+        board = int_to_board(player2.getMove(board_to_int(board), turn))
+        turn += 1
+        print()
+        print_board(board)
+        board_states.append(board_to_int(board))
+        if check_for_win(board)[0] != False:
+            print("Game Over")
+            break
+    winner = None if check_for_win(board)[1] == 0 else check_for_win(board)[1]
+    print("Winner:", winner)
+    if log:
+        date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        date = date.replace("/","-")
+        date = date.replace(":","-")
+        with open("Logged Games/"+"game"+date+".txt","w") as f:
+            f.write("Game Log\n")
+            f.write("Winner: "+str(winner)+"\n")
+            f.write("Player1: "+player1.type+"\n")
+            f.write("Player2: "+player2.type+"\n")
+            f.write("Board States:\n")
+            f.write(str(board_states))
+            f.write("\n")
+            f.write("Turns: "+str(turn)+"\n")
+            f.write("Game End\n")
+
+        
+
 player2 = SetAlgorithm(2)
+player1 = Human(1)
 
-while True:
-    player_move = input("Move:").split(",")
-    player_move[0], player_move[1] = int(player_move[0]), int(player_move[1])
-    if not make_move(board, (player_move[0], player_move[1]), 1):
-        print("INVALID MOVE")
-        continue
-    turn += 1
-    print_board(board)
-    board = int_to_board(player2.bestMove(board_to_int(board), turn))
-    turn += 1
-    print()
-    print_board(board)
-    if check_for_win(board)[0] != False:
-        print("Game Over")
-        break
+game(player1,player2,True)

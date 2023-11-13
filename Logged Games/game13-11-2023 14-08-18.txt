@@ -1,0 +1,8 @@
+Game Log
+Winner: 2
+Player1: Human
+Player2: SetAlgorithm
+Board States:
+[0, 1, 163, 166, 184, 427, 1885]
+Turns: 6
+Game End
