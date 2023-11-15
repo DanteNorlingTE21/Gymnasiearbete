@@ -2,7 +2,7 @@ from math import pow, factorial
 import threading
 from datetime import datetime
 
-DEBUG = False
+DEBUG = True
 
 class Human:
     def __init__(self, marker) -> None:
@@ -120,6 +120,8 @@ class SetAlgorithm:
                     possibleMoves.append(board_to_int(boardArray))
 
         print(possibleMoves) if DEBUG else None
+        if len(possibleMoves) == 9:
+            return board_to_int([[0, 0, 0], [0, self.marker, 0], [0, 0, 0]])
         for move in possibleMoves:
             # print("TREE TIME")
             if check_for_win(move)[0] == True:
@@ -333,18 +335,14 @@ def game(player1,player2,log:bool = False):
     print_board(board)
     board_states = [0,]
     turn = 0
+    players = [player1,player2]
     while True:
-
-        if not make_move(board, (player1.getMove()), 1):
-            print("INVALID MOVE")
-            continue
-        turn += 1
-        print_board(board)
-        board_states.append(board_to_int(board))
-        if check_for_win(board)[0] != False:
-            print("Game Over")
-            break
-        board = int_to_board(player2.getMove(board_to_int(board), turn))
+        if players[turn%2].type == "Human":
+            if not make_move(board, (players[turn%2].getMove()), 1):
+                print("INVALID MOVE")
+                continue
+        elif players[turn%2].type == "SetAlgorithm":
+            board = int_to_board(players[turn%2].getMove(board_to_int(board), turn))
         turn += 1
         print()
         print_board(board)
@@ -371,7 +369,7 @@ def game(player1,player2,log:bool = False):
 
         
 
-player2 = SetAlgorithm(2)
-player1 = Human(1)
+player1 = SetAlgorithm(2)
+player2 = Human(1)
 
 game(player1,player2,True)
