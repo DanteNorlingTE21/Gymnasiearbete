@@ -1,6 +1,9 @@
-from math import pow, factorial
+from math import pow, factorial, log
 import threading
 from datetime import datetime
+from keras.models import Sequential
+from keras.layers import Dense
+
 
 DEBUG = True
 
@@ -22,9 +25,18 @@ class Human:
             return player_move
 
 class TrainedAI:
-    pass
+    """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
+    def __init__(self, marker) -> None:
+        self.marker = marker
+        self.network = Sequential()
+        self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
+        self.network.add(Dense(9, activation="relu"))
+        self.network.add(Dense(9, activation="sigmoid"))
+        self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-
+    def handleTrainingData(self, board1,board2):
+        inputData = getBiasedBoard(board1, self.marker)
+        outputData = whatMoveWasMade(board1, board2)
 
 
 
@@ -330,6 +342,31 @@ def decipher_player_move(move:tuple):
 
     return (x,y)
 
+def whatMoveWasMade(board1, board2):
+    if not isinstance(board1, int):
+        board1 = int_to_board(board1)
+    if not isinstance(board2, int):
+        board2 = int_to_board(board2)
+    deltaBoard = board2-board1
+    if deltaBoard % 2 == 0:
+        deltaBoard = deltaBoard/2
+    if deltaBoard % 3 != 0:
+        return False
+    index = round(log(deltaBoard,3))
+    output = [0 for i in range(9)]
+    output[index] = 1
+    return output    
+
+def getBiasedBoard(board, playerMarker):
+    biasedBoard = [0 for i in range(9)]
+    for y in range(3):
+        for x in range(3):
+            if board[y][x] == playerMarker:
+                biasedBoard[x+y*3] = 1
+            elif board[y][x] != 0:
+                biasedBoard[x+y*3] = -1
+    return biasedBoard
+
 def game(player1,player2,log:bool = False):
     board = new_board()
     print_board(board)
@@ -372,4 +409,7 @@ def game(player1,player2,log:bool = False):
 player1 = SetAlgorithm(2)
 player2 = Human(1)
 
-game(player1,player2,True)
+#game(player1,player2,True)
+
+print(whatMoveWasMade(0, 729))
+print(getBiasedBoard(int_to_board(729), 2))
