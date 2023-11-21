@@ -408,8 +408,7 @@ def game(player1,player2,log:bool = False):
 
 player1 = SetAlgorithm(2)
 player2 = Human(1)
-
-#game(player1,player2,True)
+game(player1,player2,True)
 
 print(whatMoveWasMade(0, 729))
 print(getBiasedBoard(int_to_board(729), 2))
