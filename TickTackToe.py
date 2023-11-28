@@ -3,6 +3,7 @@ import threading
 from datetime import datetime
 from keras.models import Sequential
 from keras.layers import Dense
+import numpy as np
 
 
 DEBUG = True
@@ -34,11 +35,19 @@ class TrainedAI:
         self.network.add(Dense(9, activation="sigmoid"))
         self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    def handleTrainingData(self, board1,board2):
-        inputData = getBiasedBoard(board1, self.marker)
-        outputData = whatMoveWasMade(board1, board2)
-
-
+    def handleTrainingData(self, input_boards,output_boards):
+        self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
+        self.output_data = [whatMoveWasMade(input_boards[x], output_boards[x]) for x in range(len(output_boards))]
+        
+    def readTrainingData(self, file):
+        data = np.loadtxt(file, dtype='int', delimiter=',')
+        inp = data[:, 0]
+        out = data[:, 1]
+        return inp, out
+    
+    def train(self, epochs=100, batch_size=10):
+        self.handleTrainingData(self.readTrainingData("MoveLog/moves.txt"))
+        self.network.fit(np.array(self.input_data), np.array(self.output_data), epochs=epochs, batch_size=batch_size)
 
 class TreeBranch:
     def __init__(
@@ -403,6 +412,9 @@ def game(player1,player2,log:bool = False):
             f.write("\n")
             f.write("Turns: "+str(turn)+"\n")
             f.write("Game End\n")
+        with open("MoveLog/moves.txt", "a") as f:
+            for i in range(len(board_states)-1):
+                f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
 
         
 
