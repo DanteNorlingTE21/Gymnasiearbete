@@ -1,12 +1,12 @@
 from math import pow, factorial, log
 import threading
 from datetime import datetime
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense
 import numpy as np
 
 
-DEBUG = True
+DEBUG = False
 
 class Human:
     def __init__(self, marker) -> None:
@@ -27,13 +27,16 @@ class Human:
 
 class TrainedAI:
     """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
-    def __init__(self, marker) -> None:
+    def __init__(self, marker, new_model:bool = True) -> None:
         self.marker = marker
-        self.network = Sequential()
-        self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
-        self.network.add(Dense(9, activation="relu"))
-        self.network.add(Dense(9, activation="sigmoid"))
-        self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+        if new_model:
+            self.network = Sequential()
+            self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
+            self.network.add(Dense(9, activation="relu"))
+            self.network.add(Dense(9, activation="sigmoid"))
+            self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+        else:
+            self.network = load_model("Models/model1.keras")
 
     def handleTrainingData(self, input_boards,output_boards):
         self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
@@ -46,7 +49,8 @@ class TrainedAI:
         return inp, out
     
     def train(self, epochs=100, batch_size=10):
-        self.handleTrainingData(self.readTrainingData("MoveLog/moves.txt"))
+        input_boards, output_boards =self.readTrainingData("MoveLog/moves.txt")
+        self.handleTrainingData(input_boards, output_boards)
         self.network.fit(np.array(self.input_data), np.array(self.output_data), epochs=epochs, batch_size=batch_size)
 
 class TreeBranch:
@@ -352,15 +356,14 @@ def decipher_player_move(move:tuple):
     return (x,y)
 
 def whatMoveWasMade(board1, board2):
-    if not isinstance(board1, int):
-        board1 = int_to_board(board1)
-    if not isinstance(board2, int):
-        board2 = int_to_board(board2)
+    if not (isinstance(board1, int) or isinstance(board1, np.int32)):
+        board1 = board_to_int(board1)
+    if not (isinstance(board2, int) or isinstance(board2, np.int32)):
+        board2 = board_to_int(board2)
     deltaBoard = board2-board1
     if deltaBoard % 2 == 0:
         deltaBoard = deltaBoard/2
-    if deltaBoard % 3 != 0:
-        return False
+
     index = round(log(deltaBoard,3))
     output = [0 for i in range(9)]
     output[index] = 1
@@ -416,11 +419,18 @@ def game(player1,player2,log:bool = False):
             for i in range(len(board_states)-1):
                 f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
 
+"""
         
 
-player1 = SetAlgorithm(2)
-player2 = Human(1)
+player2 = SetAlgorithm(2)
+player1 = Human(1)
 game(player1,player2,True)
 
 print(whatMoveWasMade(0, 729))
 print(getBiasedBoard(int_to_board(729), 2))
+"""
+
+subjekt = TrainedAI(1)
+subjekt.train(epochs=1000, batch_size=10)
+prediction = subjekt.network.predict(np.array([getBiasedBoard(int_to_board(0), 1)]))
+print(prediction)
