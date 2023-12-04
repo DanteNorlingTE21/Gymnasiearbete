@@ -1,7 +1,7 @@
 from math import pow, factorial, log
 import threading
 from datetime import datetime
-from keras.models import Sequential, load_model
+from keras.models import Sequential, load_model, save_model
 from keras.layers import Dense
 import numpy as np
 
@@ -29,6 +29,7 @@ class TrainedAI:
     """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
     def __init__(self, marker, new_model:bool = True) -> None:
         self.marker = marker
+        self.type = "TrainedAI"
         if new_model:
             self.network = Sequential()
             self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
@@ -36,7 +37,7 @@ class TrainedAI:
             self.network.add(Dense(9, activation="sigmoid"))
             self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         else:
-            self.network = load_model("Models/model1.keras")
+            self.network = load_model("Models/model2.keras")
 
     def handleTrainingData(self, input_boards,output_boards):
         self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
@@ -49,9 +50,23 @@ class TrainedAI:
         return inp, out
     
     def train(self, epochs=100, batch_size=10):
-        input_boards, output_boards =self.readTrainingData("MoveLog/moves.txt")
+        input_boards, output_boards =self.readTrainingData("MoveLog/winningMoves.txt")
         self.handleTrainingData(input_boards, output_boards)
         self.network.fit(np.array(self.input_data), np.array(self.output_data), epochs=epochs, batch_size=batch_size)
+    
+    def getMove(self, board):
+        prediction = self.network.predict(np.array([getBiasedBoard(board, self.marker)]))
+        move_order = np.argsort(prediction[0])
+        print(move_order) if DEBUG else None
+        for i in range(-1,-10,-1):
+            if make_move(board, (move_order[i]%3,move_order[i]//3), self.marker):
+                break
+        else:
+            while True:
+                random_move = (np.random.randint(0,3),np.random.randint(0,3))
+                if make_move(board, random_move, self.marker):
+                    break
+
 
 class TreeBranch:
     def __init__(
@@ -392,6 +407,8 @@ def game(player1,player2,log:bool = False):
                 continue
         elif players[turn%2].type == "SetAlgorithm":
             board = int_to_board(players[turn%2].getMove(board_to_int(board), turn))
+        elif players[turn%2].type == "TrainedAI":
+            players[turn%2].getMove(board)
         turn += 1
         print()
         print_board(board)
@@ -418,9 +435,25 @@ def game(player1,player2,log:bool = False):
         with open("MoveLog/moves.txt", "a") as f:
             for i in range(len(board_states)-1):
                 f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
+    if winner != None:
+        with open("MoveLog/winningMoves.txt", "a") as f:
+            if winner == 1:
+                for i in range(9):
+                    if 2*i+1 >= len(board_states):
+                        break
+                    f.write(str(board_states[2*i])+","+str(board_states[2*i+1])+"\n")
+            else:
+                for i in range(9):
+                    if 2*i+2 >= len(board_states):
+                        break
+                    f.write(str(board_states[2*i+1])+","+str(board_states[2*i+2])+"\n")
+    else:
+        for i in range(len(board_states)-1):
+                f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
 
-"""
+
         
+"""
 
 player2 = SetAlgorithm(2)
 player1 = Human(1)
@@ -428,9 +461,29 @@ game(player1,player2,True)
 
 print(whatMoveWasMade(0, 729))
 print(getBiasedBoard(int_to_board(729), 2))
-"""
 
 subjekt = TrainedAI(1)
 subjekt.train(epochs=1000, batch_size=10)
-prediction = subjekt.network.predict(np.array([getBiasedBoard(int_to_board(0), 1)]))
-print(prediction)
+board = new_board()
+subjekt.getMove(board)
+print(board)
+save_model(subjekt.network, "Models/model2.keras")
+"""
+
+player1 = Human(1)
+player2 = TrainedAI(2, False)
+
+"""
+
+for i in range(1,101):
+    if i%20 == 0:
+        player2.train(epochs=1000, batch_size=10)
+    if i%2 == 0:
+        game(player1,player2,True)
+    else:
+        game(player2,player1,True)
+else:
+    save_model(player2.network, "Models/model2.keras")
+"""
+
+game(player1,player2,False)

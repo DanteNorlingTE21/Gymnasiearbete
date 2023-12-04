@@ -1,6 +1,9 @@
 import numpy as np
 
-test = np.loadtxt('MoveLog\moves.txt', dtype='int', delimiter=',')
-inp = test[:, 0]
-out = test[:, 1]
-print(type(inp[0]))
+
+# Example usage:
+input_array = np.array([3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5])
+result = np.argsort(input_array)
+
+print("Input Array:", input_array)
+print("Output Array:", result)
