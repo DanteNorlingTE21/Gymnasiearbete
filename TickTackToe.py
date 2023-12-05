@@ -27,17 +27,19 @@ class Human:
 
 class TrainedAI:
     """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
-    def __init__(self, marker, new_model:bool = True) -> None:
+    def __init__(self, marker,randomness = 50,  new_model:bool = True) -> None:
         self.marker = marker
         self.type = "TrainedAI"
+        self.randomness = randomness
         if new_model:
             self.network = Sequential()
             self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
-            self.network.add(Dense(9, activation="relu"))
+            self.network.add(Dense(9, activation="sigmoid"))
+            self.network.add(Dense(9, activation="sigmoid"))
             self.network.add(Dense(9, activation="sigmoid"))
             self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         else:
-            self.network = load_model("Models/model2.keras")
+            self.network = load_model("Models/model3.keras")
 
     def handleTrainingData(self, input_boards,output_boards):
         self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
@@ -58,9 +60,10 @@ class TrainedAI:
         prediction = self.network.predict(np.array([getBiasedBoard(board, self.marker)]))
         move_order = np.argsort(prediction[0])
         print(move_order) if DEBUG else None
-        for i in range(-1,-10,-1):
-            if make_move(board, (move_order[i]%3,move_order[i]//3), self.marker):
-                break
+        if self.randomness < np.random.randint(0,100):
+            for i in range(-1,-10,-1):
+                if make_move(board, (move_order[i]%3,move_order[i]//3), self.marker):
+                    break
         else:
             while True:
                 random_move = (np.random.randint(0,3),np.random.randint(0,3))
@@ -435,21 +438,21 @@ def game(player1,player2,log:bool = False):
         with open("MoveLog/moves.txt", "a") as f:
             for i in range(len(board_states)-1):
                 f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
-    if winner != None:
-        with open("MoveLog/winningMoves.txt", "a") as f:
-            if winner == 1:
-                for i in range(9):
-                    if 2*i+1 >= len(board_states):
-                        break
-                    f.write(str(board_states[2*i])+","+str(board_states[2*i+1])+"\n")
-            else:
-                for i in range(9):
-                    if 2*i+2 >= len(board_states):
-                        break
-                    f.write(str(board_states[2*i+1])+","+str(board_states[2*i+2])+"\n")
-    else:
-        for i in range(len(board_states)-1):
-                f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
+    with open("MoveLog/winningMoves.txt", "a") as f:    
+        if winner != None:
+                if winner == 1:
+                    for i in range(9):
+                        if 2*i+1 >= len(board_states):
+                            break
+                        f.write(str(board_states[2*i])+","+str(board_states[2*i+1])+"\n")
+                else:
+                    for i in range(9):
+                        if 2*i+2 >= len(board_states):
+                            break
+                        f.write(str(board_states[2*i+1])+","+str(board_states[2*i+2])+"\n")
+        else:
+            for i in range(len(board_states)-1):
+                    f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
 
 
         
@@ -467,23 +470,28 @@ subjekt.train(epochs=1000, batch_size=10)
 board = new_board()
 subjekt.getMove(board)
 print(board)
-save_model(subjekt.network, "Models/model2.keras")
+save_model(subjekt.network, "Models/model3.keras")
 """
 
-player1 = Human(1)
-player2 = TrainedAI(2, False)
+player1 = TrainedAI(1,40 ,False)
+player2 = TrainedAI(2,36 ,False)
 
-"""
-
-for i in range(1,101):
-    if i%20 == 0:
-        player2.train(epochs=1000, batch_size=10)
-    if i%2 == 0:
-        game(player1,player2,True)
-    else:
-        game(player2,player1,True)
+for i in range(5):
+    for i in range(100):
+        if i%2 == 0:
+            game(player1,player2,True)
+        else:
+            game(player2,player1,True)
+    player1.train(epochs=100, batch_size=10)
+    player1.randomness *= 0.85
+    clear_file = open("MoveLog/winningMoves.txt", "w")
+    clear_file.close()
 else:
-    save_model(player2.network, "Models/model2.keras")
+    save_model(player2.network, "Models/model3.keras")
 """
 
 game(player1,player2,False)
+"""
+
+
+#973

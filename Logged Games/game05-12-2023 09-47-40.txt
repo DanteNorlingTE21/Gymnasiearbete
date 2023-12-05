@@ -1,0 +1,8 @@
+Game Log
+Winner: 2
+Player1: TrainedAI
+Player2: TrainedAI
+Board States:
+[0, 729, 783, 2970, 3456, 3465, 3627]
+Turns: 6
+Game End
