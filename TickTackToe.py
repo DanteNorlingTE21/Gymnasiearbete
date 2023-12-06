@@ -473,8 +473,9 @@ print(board)
 save_model(subjekt.network, "Models/model3.keras")
 """
 
-player1 = TrainedAI(1,40 ,False)
-player2 = TrainedAI(2,36 ,False)
+player1 = TrainedAI(1,0, False)
+player2 = TrainedAI(2,30 ,False)
+
 
 for i in range(5):
     for i in range(100):
@@ -482,7 +483,7 @@ for i in range(5):
             game(player1,player2,True)
         else:
             game(player2,player1,True)
-    player1.train(epochs=100, batch_size=10)
+    player1.train(epochs=300, batch_size=10)
     player1.randomness *= 0.85
     clear_file = open("MoveLog/winningMoves.txt", "w")
     clear_file.close()
@@ -490,7 +491,7 @@ else:
     save_model(player2.network, "Models/model3.keras")
 """
 
-game(player1,player2,False)
+game(player2,player1,False)
 """
 
 
