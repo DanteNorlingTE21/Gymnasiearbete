@@ -1,12 +1,20 @@
 from math import pow, factorial, log
-import threading
+#import threading
 from datetime import datetime
+import keras
 from keras.models import Sequential, load_model, save_model
 from keras.layers import Dense
 import numpy as np
-
+from copy import deepcopy
 
 DEBUG = False
+DEBUG_MINMAX = False
+DEBUG_ALGORITHM = True
+TREE_DEBUG = False
+DEBUG_AI=True
+TRAIN = False
+TEST = True
+SAVE_ON_BREAK = False
 
 class Human:
     def __init__(self, marker) -> None:
@@ -25,21 +33,21 @@ class Human:
                 continue
             return player_move
 
-class TrainedAI:
-    """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
+class TrainedAI2:
     def __init__(self, marker,randomness = 50,  new_model:bool = True) -> None:
         self.marker = marker
         self.type = "TrainedAI"
         self.randomness = randomness
         if new_model:
-            self.network = Sequential()
-            self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
-            self.network.add(Dense(9, activation="sigmoid"))
-            self.network.add(Dense(9, activation="sigmoid"))
-            self.network.add(Dense(9, activation="sigmoid"))
+            self.network = Sequential([
+                    Dense(9,input_shape=(9,),bias_initializer="ones"),
+                    Dense(9,bias_initializer="ones"),
+                    Dense(9,bias_initializer="ones"),
+                    Dense(9, activation="sigmoid",bias_initializer="ones"),]
+            )
             self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         else:
-            self.network = load_model("Models/model3.keras")
+            self.network = load_model("Models/new_model_5.keras")
 
     def handleTrainingData(self, input_boards,output_boards):
         self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
@@ -54,12 +62,16 @@ class TrainedAI:
     def train(self, epochs=100, batch_size=10):
         input_boards, output_boards =self.readTrainingData("MoveLog/winningMoves.txt")
         self.handleTrainingData(input_boards, output_boards)
+        None
         self.network.fit(np.array(self.input_data), np.array(self.output_data), epochs=epochs, batch_size=batch_size)
     
     def getMove(self, board):
-        prediction = self.network.predict(np.array([getBiasedBoard(board, self.marker)]))
+        input_data = np.array([getBiasedBoard(board, self.marker)])
+        print(input_data) if DEBUG and DEBUG_AI else None
+        prediction = self.network.predict(input_data)
+        print(prediction[0]) if DEBUG and DEBUG_AI else None
         move_order = np.argsort(prediction[0])
-        print(move_order) if DEBUG else None
+        print(move_order) if DEBUG and DEBUG_AI else None
         if self.randomness < np.random.randint(0,100):
             for i in range(-1,-10,-1):
                 if make_move(board, (move_order[i]%3,move_order[i]//3), self.marker):
@@ -69,6 +81,141 @@ class TrainedAI:
                 random_move = (np.random.randint(0,3),np.random.randint(0,3))
                 if make_move(board, random_move, self.marker):
                     break
+    def showThoughts(self,board):
+        return self.network.predict(np.array([getBiasedBoard(board, self.marker)])), np.argsort(self.network.predict(np.array([getBiasedBoard(board, self.marker)])))
+
+class TrainedAI:
+    """https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/"""
+    def __init__(self, marker,randomness = 50,  new_model:bool = True) -> None:
+        self.marker = marker
+        self.type = "TrainedAI"
+        self.randomness = randomness
+        if new_model:
+            self.network = Sequential()
+            self.network.add(Dense(9, input_dim=9, activation="sigmoid"))
+            self.network.add(Dense(9, activation="sigmoid"))
+            self.network.add(Dense(9, activation="sigmoid"))
+            self.network.add(Dense(9, activation="sigmoid"))
+            self.network.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+        else:
+            self.network = load_model("Models/new_model_5.keras")
+
+    def handleTrainingData(self, input_boards,output_boards):
+        self.input_data = [getBiasedBoard(int_to_board(x), self.marker) for x in input_boards]
+        self.output_data = [whatMoveWasMade(input_boards[x], output_boards[x]) for x in range(len(output_boards))]
+        
+    def readTrainingData(self, file):
+        data = np.loadtxt(file, dtype='int', delimiter=',')
+        inp = data[:, 0]
+        out = data[:, 1]
+        return inp, out
+    
+    def train(self, epochs=100, batch_size=10):
+        input_boards, output_boards =self.readTrainingData("MoveLog/winningMoves.txt")
+        self.handleTrainingData(input_boards, output_boards)
+        None
+        self.network.fit(np.array(self.input_data), np.array(self.output_data), epochs=epochs, batch_size=batch_size)
+    
+    def getMove(self, board):
+        input_data = np.array([getBiasedBoard(board, self.marker)])
+        print(input_data) if DEBUG and DEBUG_AI else None
+        prediction = self.network.predict(input_data)
+        print(prediction[0]) if DEBUG and DEBUG_AI else None
+        move_order = np.argsort(prediction[0])
+        print(move_order) if DEBUG and DEBUG_AI else None
+        if self.randomness < np.random.randint(0,100):
+            for i in range(-1,-10,-1):
+                if make_move(board, (move_order[i]%3,move_order[i]//3), self.marker):
+                    break
+        else:
+            while True:
+                random_move = (np.random.randint(0,3),np.random.randint(0,3))
+                if make_move(board, random_move, self.marker):
+                    break
+    def showThoughts(self,board):
+        
+        return self.network.predict(np.array([getBiasedBoard(board, self.marker)])), np.argsort(self.network.predict(np.array([getBiasedBoard(board, self.marker)]))) 
+
+class MinMaxBranch:
+    def __init__(self, state, depth, max_turn:bool, min_turn:bool,player_marker:int,marker,propagate:bool=False) -> None:
+        self.state = state
+        self.depth = depth
+        self.max_turn = max_turn
+        self.min_turn = min_turn
+        self.player_marker = player_marker
+        self.marker = marker
+        self.children = []
+        self.value = float("-inf") if self.max_turn else float("inf")
+
+        if propagate:
+            self.getValues()
+    
+    def Max(self):
+        if len(self.children) == 0:
+            return self.value
+        else:
+            max_value = max([child.value for child in self.children])
+            return max_value
+        
+    def Min(self):
+        if len(self.children) == 0:
+            return self.value
+        else:
+            min_value = min([child.value for child in self.children])
+            return min_value
+    
+    def getValues(self):
+        n = check_for_win(self.state)
+        if n[0] == True:
+            if n[1] == self.player_marker:
+                self.value = 10 - self.depth
+            else:
+                self.value = self.depth-10
+            print('\n',self.value) if DEBUG and DEBUG_MINMAX else None
+            print_board(int_to_board(self.state)) if DEBUG and DEBUG_MINMAX else None
+            return
+        elif n[0] == "TIE":
+            self.value = 0
+            return
+        
+        possibleMoves = []
+        for y in range(3):
+            for x in range(3):
+                currentBoard = deepcopy(int_to_board(self.state))
+                if currentBoard[y][x] == 0:
+                    currentBoard[y][x] = self.marker
+                    possibleMoves.append(board_to_int(currentBoard))
+        
+        for move in possibleMoves:
+            self.children.append(MinMaxBranch(move, self.depth+1, not self.max_turn, not self.min_turn,self.player_marker, 1 if self.marker == 2 else 2, True))
+        if self.max_turn:
+            self.value = self.Max()
+            print
+        elif self.min_turn:
+            self.value = self.Min()
+        return
+
+class MinMax:
+    def __init__(self, marker) -> None:
+        self.marker = marker
+        self.type = "MinMax"
+    
+    def getMove(self, board: int,turn):
+        tree = MinMaxBranch(board,0,True,False,self.marker,self.marker)
+        tree.getValues()
+
+        current_best = tree.children[0].value
+        best_move = tree.children[0].state
+        for child in tree.children:
+            print(child.value) if DEBUG and DEBUG_MINMAX else None
+            if child.value > current_best:
+                current_best = child.value
+                best_move = child.state
+        return best_move
+            
+
+
+
 
 
 class TreeBranch:
@@ -79,8 +226,16 @@ class TreeBranch:
         currentPlayerMarker,
         start,
         depth: int = 0,
+        isGrandparent: bool = False,
     ) -> None:
 
+        self.isGrandparent = True if depth == 0 else False
+        if self.isGrandparent:
+            self.grandParent = self
+        elif parent.isGrandparent:
+            self.grandParent = parent
+        else:
+            self.grandParent = parent.grandParent
         self.children = []
         self.marker = currentPlayerMarker
         self.state = board
@@ -88,15 +243,25 @@ class TreeBranch:
         self.startDepth = start
         self.depth = depth
         self.value = {1: 0, 2: 0}
+        self.knownEnds = []
+        
+        if self.isGrandparent:
+            self.getValue()
+        elif self.state not in self.grandParent.knownEnds:
+            self.getValue()
 
-        self.getValue()
+
 
     def getValue(self):
+        print_board(int_to_board(self.state)) if DEBUG and TREE_DEBUG else None
+        print() if DEBUG and TREE_DEBUG else None
         if check_for_win(self.state)[0] == True:
+            self.grandParent.knownEnds.append(self.state)
             self.updateTree(1, self.marker)
             return
         elif check_for_win(self.state)[0] == "TIE":
-            self.updateTree(0, self.marker)
+            self.grandParent.knownEnds.append(self.state)
+            self.updateTree(2, self.markert,True)
             return
 
         possibleMoves = []
@@ -110,9 +275,11 @@ class TreeBranch:
         for move in possibleMoves:
             n = check_for_win(move)
             if n[0] == True:
+                self.grandParent.knownEnds.append(self.state)
                 self.updateTree(1, self.marker)
             elif n[0] == "TIE":
-                self.updateTree(0, self.marker)
+                self.grandParent.knownEnds.append(self.state)
+                self.updateTree(2, self.marker,True)
                 # self.updateTree(1, 1 if self.marker == 2 else 2)
             else:
 
@@ -126,23 +293,29 @@ class TreeBranch:
                     )
                 )
 
-    def updateTree(self, deltaValue, marker):
-        if marker in self.value.keys():
-            """
-            print(
-                "Tie dephth", self.depth
-            ) if deltaValue == 1 and self.depth + self.startDepth > 4 else None
-            """
-            self.value[marker] += deltaValue  # * factorial(
-            #    9 - (self.startDepth + self.depth)
-            # )
-            # self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
+    def updateTree(self, deltaValue, marker, tie:bool=False):
+        if not tie:
+            if marker in self.value.keys():
+                """
+                print(
+                    "Tie dephth", self.depth
+                ) if deltaValue == 1 and self.depth + self.startDepth > 4 else None
+                """
+                self.value[marker] += deltaValue  # * factorial(
+                #    9 - (self.startDepth + self.depth)
+                # )
+                # self.value[2 if marker == 1 else 1] += -deltaValue * 0.5
+            else:
+                self.value[marker] = deltaValue
+            if self.depth != 0:
+                # print(self.value[marker])
+                # print(self.parent)
+                self.parent.updateTree(deltaValue / 2, marker)
         else:
-            self.value[marker] = deltaValue
-        if self.depth != 0:
-            # print(self.value[marker])
-            # print(self.parent)
-            self.parent.updateTree(deltaValue / 10, marker)
+            self.value[1] += deltaValue
+            self.value[2] += deltaValue
+            if self.depth != 0:
+                self.parent.updateTree(deltaValue / 2, marker, True)
 
 
 class SetAlgorithm:
@@ -151,6 +324,8 @@ class SetAlgorithm:
             raise Exception("INVALID MARKER")
         self.marker = marker
         self.type = "SetAlgorithm"
+    
+
 
     def getMove(self, board: int, turn: int = 0):
         trees = []
@@ -162,7 +337,7 @@ class SetAlgorithm:
                     boardArray[y][x] = self.marker
                     possibleMoves.append(board_to_int(boardArray))
 
-        print(possibleMoves) if DEBUG else None
+        print(possibleMoves) if DEBUG and DEBUG_ALGORITHM else None
         if len(possibleMoves) == 9:
             return board_to_int([[0, 0, 0], [0, self.marker, 0], [0, 0, 0]])
         for move in possibleMoves:
@@ -181,7 +356,7 @@ class SetAlgorithm:
         bestTree = trees[0]
         # print("WIN PERCENT", winPercent)
         for tree in trees:
-            if DEBUG:
+            if DEBUG and DEBUG_ALGORITHM:
                 print(
                     tree.value,
                 )
@@ -399,22 +574,22 @@ def getBiasedBoard(board, playerMarker):
 
 def game(player1,player2,log:bool = False):
     board = new_board()
-    print_board(board)
+    print_board(board) if not TRAIN else None
     board_states = [0,]
     turn = 0
     players = [player1,player2]
     while True:
         if players[turn%2].type == "Human":
-            if not make_move(board, (players[turn%2].getMove()), 1):
+            if not make_move(board, (players[turn%2].getMove()), players[turn%2].marker):
                 print("INVALID MOVE")
                 continue
-        elif players[turn%2].type == "SetAlgorithm":
+        elif players[turn%2].type == "SetAlgorithm" or players[turn%2].type == "MinMax":
             board = int_to_board(players[turn%2].getMove(board_to_int(board), turn))
         elif players[turn%2].type == "TrainedAI":
             players[turn%2].getMove(board)
         turn += 1
-        print()
-        print_board(board)
+        print() if not TRAIN else None
+        print_board(board) if not TRAIN else None
         board_states.append(board_to_int(board))
         if check_for_win(board)[0] != False:
             print("Game Over")
@@ -470,29 +645,43 @@ subjekt.train(epochs=1000, batch_size=10)
 board = new_board()
 subjekt.getMove(board)
 print(board)
-save_model(subjekt.network, "Models/model3.keras")
+save_model(subjekt.network, "Models/new_model_5.keras")
 """
 
-player1 = TrainedAI(1,0, False)
-player2 = TrainedAI(2,30 ,False)
 
-
-for i in range(5):
-    for i in range(100):
-        if i%2 == 0:
-            game(player1,player2,True)
-        else:
-            game(player2,player1,True)
-    player1.train(epochs=300, batch_size=10)
-    player1.randomness *= 0.85
-    clear_file = open("MoveLog/winningMoves.txt", "w")
-    clear_file.close()
+if not TEST:
+    if TRAIN:
+        
+        player1 = TrainedAI2(1,30,False)
+        player2 = TrainedAI2(2,25 ,False)
+        try:
+            
+            for i in range(5):
+                for i in range(300):
+                    if i%2 == 0:
+                        game(player1,player2,True)
+                    else:
+                        game(player2,player1,True)
+                player1.train(epochs=300, batch_size=100)
+                player1.randomness *= 0.85
+                player2.network = player1.network
+                clear_file = open("MoveLog/winningMoves.txt", "w")
+                clear_file.close()
+            else:
+                save_model(player1.network, "Models/new_model_5.keras")
+                print("Model Saved")
+        except KeyboardInterrupt:
+            if SAVE_ON_BREAK:
+                save_model(player1.network, "Models/new_model_5.keras")
+                print("Model Saved")
+    else:
+        player1 = TrainedAI2(1,0,False)
+        player2 = Human(2)
+        game(player1,player2,False)
 else:
-    save_model(player2.network, "Models/model3.keras")
-"""
+    game(Human(1),MinMax(2),False)
 
-game(player2,player1,False)
-"""
 
+#Varför repeterar den samma drag hela tiden?
 
 #973
