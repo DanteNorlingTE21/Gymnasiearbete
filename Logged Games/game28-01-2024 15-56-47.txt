@@ -1,0 +1,8 @@
+Game Log
+Winner: 1
+Player1: MinMax
+Player2: Human
+Board States:
+[0, 1, 7, 34, 1492, 1573, 2059, 8620]
+Turns: 7
+Game End

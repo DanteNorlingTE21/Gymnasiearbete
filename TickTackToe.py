@@ -693,11 +693,11 @@ if not TEST:
         player1 = Human(2)
         game(player1,player2,False)
 else:
-    for i in range(123):
+    for i in range(100):
         if i%2 == 0:
-            game(TrainedAI2(1,3,False,),Human(2),True)
+            game(MinMax(1),Human(2),True)
         else:
-            game(Human(1),TrainedAI2(2,3,False),True)
+            game(Human(1),MinMax(2),True)
 
 
 #Varför repeterar den samma drag hela tiden?
