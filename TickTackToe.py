@@ -6,13 +6,14 @@ from keras.models import Sequential, load_model, save_model
 from keras.layers import Dense
 import numpy as np
 from copy import deepcopy
+from time import sleep
 
 DEBUG = False
 DEBUG_MINMAX = False
-DEBUG_ALGORITHM = True
+DEBUG_ALGORITHM = False
 TREE_DEBUG = False
 DEBUG_AI=True
-TRAIN = False
+TRAIN = True
 TEST = True
 SAVE_ON_BREAK = False
 
@@ -201,6 +202,20 @@ class MinMax:
         self.type = "MinMax"
     
     def getMove(self, board: int,turn):
+        opponentMarker = 1 if self.marker == 2 else 2
+        if board == 0:
+            return self.marker
+        if board == 1*opponentMarker or board == 9*opponentMarker or board == 729*opponentMarker or board == 6561*opponentMarker:
+            return board + self.marker*81
+        if board == 3*opponentMarker or board == 27*opponentMarker:
+            return board + self.marker
+        if board == 243*opponentMarker:
+            return board + self.marker*9
+        if board == 2187*opponentMarker:
+            return board + self.marker*3
+        if board == 81*opponentMarker:
+            return board + self.marker
+
         tree = MinMaxBranch(board,0,True,False,self.marker,self.marker)
         tree.getValues()
 
@@ -213,9 +228,6 @@ class MinMax:
                 best_move = child.state
         return best_move
             
-
-
-
 
 
 class TreeBranch:
@@ -613,6 +625,7 @@ def game(player1,player2,log:bool = False):
         with open("MoveLog/moves.txt", "a") as f:
             for i in range(len(board_states)-1):
                 f.write(str(board_states[i])+","+str(board_states[i+1])+"\n")
+        #sleep(1)
     with open("MoveLog/winningMoves.txt", "a") as f:    
         if winner != None:
                 if winner == 1:
@@ -652,19 +665,20 @@ save_model(subjekt.network, "Models/new_model_5.keras")
 if not TEST:
     if TRAIN:
         
-        player1 = TrainedAI2(1,30,False)
-        player2 = TrainedAI2(2,25 ,False)
+        player1 = TrainedAI2(1,20,False)
+        #player2 = TrainedAI2(2,40 ,False)
+        player2 = MinMax(2)
         try:
             
-            for i in range(5):
+            for i in range(7):
                 for i in range(300):
                     if i%2 == 0:
                         game(player1,player2,True)
                     else:
                         game(player2,player1,True)
-                player1.train(epochs=300, batch_size=100)
-                player1.randomness *= 0.85
-                player2.network = player1.network
+                player1.train(epochs=300, batch_size=200)
+                player1.randomness *= 0.75
+                #player2.network = player1.network
                 clear_file = open("MoveLog/winningMoves.txt", "w")
                 clear_file.close()
             else:
@@ -675,11 +689,14 @@ if not TEST:
                 save_model(player1.network, "Models/new_model_5.keras")
                 print("Model Saved")
     else:
-        player1 = TrainedAI2(1,0,False)
-        player2 = Human(2)
+        player2 = TrainedAI2(1,0,False)
+        player1 = Human(2)
         game(player1,player2,False)
 else:
-    game(Human(1),MinMax(2),False)
+    for i in range(100):
+        game(TrainedAI2(1,3,False),MinMax(2),True)
+    for i in range(100):
+        game(MinMax(1),TrainedAI2(2,3,False),True)
 
 
 #Varför repeterar den samma drag hela tiden?
