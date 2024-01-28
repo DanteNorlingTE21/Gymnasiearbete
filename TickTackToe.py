@@ -13,7 +13,7 @@ DEBUG_MINMAX = False
 DEBUG_ALGORITHM = False
 TREE_DEBUG = False
 DEBUG_AI=True
-TRAIN = True
+TRAIN = False
 TEST = True
 SAVE_ON_BREAK = False
 
@@ -693,10 +693,11 @@ if not TEST:
         player1 = Human(2)
         game(player1,player2,False)
 else:
-    for i in range(100):
-        game(TrainedAI2(1,3,False),MinMax(2),True)
-    for i in range(100):
-        game(MinMax(1),TrainedAI2(2,3,False),True)
+    for i in range(123):
+        if i%2 == 0:
+            game(TrainedAI2(1,3,False,),Human(2),True)
+        else:
+            game(Human(1),TrainedAI2(2,3,False),True)
 
 
 #Varför repeterar den samma drag hela tiden?
