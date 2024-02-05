@@ -698,8 +698,3 @@ else:
             game(MinMax(1),Human(2),True)
         else:
             game(Human(1),MinMax(2),True)
-
-
-#Varför repeterar den samma drag hela tiden?
-
-#973
